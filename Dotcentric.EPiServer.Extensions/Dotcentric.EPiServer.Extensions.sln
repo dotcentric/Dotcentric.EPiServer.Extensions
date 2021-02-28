@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30523.141
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dotcentric.EPiServer.Extensions.Website", "Dotcentric.EPiServer.Extensions.Website\Dotcentric.EPiServer.Extensions.Website.csproj", "{BCFC31D9-BEBD-420B-85F8-524D9EB5B237}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dotcentric.EPiServer.Extensions", "Dotcentric.EPiServer.Extensions\Dotcentric.EPiServer.Extensions.csproj", "{E0535647-EB9A-433D-8DD2-892B2EEB7B20}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BCFC31D9-BEBD-420B-85F8-524D9EB5B237}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCFC31D9-BEBD-420B-85F8-524D9EB5B237}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCFC31D9-BEBD-420B-85F8-524D9EB5B237}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCFC31D9-BEBD-420B-85F8-524D9EB5B237}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0535647-EB9A-433D-8DD2-892B2EEB7B20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0535647-EB9A-433D-8DD2-892B2EEB7B20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0535647-EB9A-433D-8DD2-892B2EEB7B20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0535647-EB9A-433D-8DD2-892B2EEB7B20}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9B29674C-6DD1-44BF-898B-1C565502E569}
+	EndGlobalSection
+EndGlobal
