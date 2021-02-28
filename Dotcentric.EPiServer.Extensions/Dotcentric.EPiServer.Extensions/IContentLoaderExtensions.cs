@@ -219,5 +219,72 @@ namespace Dotcentric.EPiServer.Extensions
         {
             return GetAncestors<IContent>(contentLoader, content, predicate, maxLevel);
         }
+
+        /// <summary>
+        /// Non recursive function to retrieve the first descendant or self based on the predicate
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="contentLoader"></param>
+        /// <param name="content"></param>
+        /// <param name="predicate"></param>
+        /// <param name="maxLevel"></param>
+        /// <returns></returns>
+        public static T GetDescendantOrSelf<T>(this IContentLoader contentLoader, 
+            IContent content, 
+            Func<T, bool> predicate,
+            int maxLevel = defaultMaxLevel) where T : IContent
+        {
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+
+            if (content is T typedContent && predicate.Invoke(typedContent))
+                return (T)content;
+
+            IEnumerable<IContent> pivot = new List<IContent>
+            {
+                content
+            };
+
+            for (var i = 0; i < maxLevel; i++)
+            {
+                var children = pivot.SelectMany(x => contentLoader.GetChildren<IContent>(x.ContentLink));
+
+                if (!children.Any())
+                    break;
+
+                var res = children
+                    .OfType<T>()
+                    .FirstOrDefault(predicate);
+
+                //we can return the object is the value is not default nor null
+                if (res != null)
+                    return res;
+
+                //we move to the next level
+                pivot = children;
+            }
+
+            //we couldnt find a predicate so we just return the default value for the return
+            return default;
+        }
+
+        /// <summary>
+        /// Non recursive non generic function to retrieve the first descendant or self 
+        /// based on the predicate
+        /// </summary>
+        /// <param name="contentLoader"></param>
+        /// <param name="content"></param>
+        /// <param name="predicate"></param>
+        /// <param name="maxLevel"></param>
+        /// <returns></returns>
+        public static IContent GetDescendantOrSelf(this IContentLoader contentLoader, 
+            IContent content, 
+            Func<IContent, bool> predicate,
+            int maxLevel = defaultMaxLevel)
+        {
+            return GetDescendantOrSelf<IContent>(contentLoader, content, predicate, maxLevel);
+        }
+
+
     }
 }
