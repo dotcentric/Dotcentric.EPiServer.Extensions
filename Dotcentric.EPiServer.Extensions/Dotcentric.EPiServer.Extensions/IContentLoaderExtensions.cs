@@ -417,6 +417,29 @@ namespace Dotcentric.EPiServer.Extensions
             return predicate == null ? children.FirstOrDefault() : children.FirstOrDefault(predicate);
         }
 
+        public static IContentData FirstChild(this IContentLoader contentLoader,
+            ContentReference contentReference,
+            Func<IContentData, bool> predicate = null)
+        {
+            return FirstChild<IContentData>(contentLoader, contentReference, predicate);
+        }
+
+        public static T LastChild<T>(this IContentLoader contentLoader,
+           ContentReference contentReference,
+           Func<T, bool> predicate = null) where T : IContentData
+        {
+            var children = contentLoader.GetChildren<T>(contentReference);
+
+            return predicate == null ? children.LastOrDefault() : children.LastOrDefault(predicate);
+        }
+
+        public static IContentData LastChild(this IContentLoader contentLoader,
+            ContentReference contentReference,
+            Func<IContentData, bool> predicate = null)
+        {
+            return LastChild<IContentData>(contentLoader, contentReference, predicate);
+        }
+
         public static IEnumerable<IContent> OrderedSiblingsAndSelf<TKey>(this IContentLoader contentLoader,
            IContent content,
            Func<IContent, TKey> keySelector)
