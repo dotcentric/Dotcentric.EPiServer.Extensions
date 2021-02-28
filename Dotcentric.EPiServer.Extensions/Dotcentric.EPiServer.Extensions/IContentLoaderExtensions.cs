@@ -28,10 +28,8 @@ namespace Dotcentric.EPiServer.Extensions
             if (content == null)
                 return null;
 
-            //pivot will be the variable that will be used to navigate up the content tree
             var contentPivot = content;
 
-            //please do not use 'while' loops
             for (var i = 0; i < maxLevel; i++)
             {
                 if (predicate.Invoke(contentPivot))
@@ -285,6 +283,41 @@ namespace Dotcentric.EPiServer.Extensions
             return GetDescendantOrSelf<IContent>(contentLoader, content, predicate, maxLevel);
         }
 
+        public static IEnumerable<T> GetDescendants<T>(this IContentLoader contentLoader, 
+            IContent content,
+            Func<T, bool> predicate = null,
+            int maxLevel = defaultMaxLevel)
+        {
+            var toReturn = new List<T>();
 
+            IEnumerable<IContent> pivot = new List<IContent>
+            {
+                content
+            };
+
+            for (var i = 0; i < maxLevel; i++)
+            {
+                var children = pivot.SelectMany(x => contentLoader.GetChildren<IContent>(x.ContentLink));
+
+                if (!children.Any())
+                    break;
+
+                pivot = children;
+
+                var res = predicate == null ? children.OfType<T>() : children.OfType<T>().Where(predicate);
+
+                toReturn.AddRange(res);
+            }
+
+            return toReturn;
+        }
+    
+        public static IEnumerable<IContent> GetDescendants(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, bool> predicate = null,
+            int maxLevel = defaultMaxLevel)
+        {
+            return GetDescendants<IContent>(contentLoader, content, predicate, maxLevel);
+        }
     }
 }
