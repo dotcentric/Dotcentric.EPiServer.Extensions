@@ -11,6 +11,43 @@ namespace Dotcentric.EPiServer.Extensions
         //max number of levels in the content tree
         public const int defaultMaxLevel = 10;
 
+        public static T GetAncestorOrSelf<T>(this IContentLoader contentLoader,
+            IContent content,
+            Func<T, bool> predicate = null,
+            int maxLevel = defaultMaxLevel) where T : IContent
+        {
+            if (content == null)
+                throw new ArgumentNullException(nameof(content));
+
+            var contentPivot = content;
+
+            for (var i = 0; i < maxLevel; i++)
+            {
+                if (contentPivot is T typedContentPivot) 
+                {
+                    if (predicate == null)
+                        return typedContentPivot;
+
+                    else if (predicate.Invoke(typedContentPivot))
+                        return typedContentPivot;
+                }
+
+                var parent = ContentReference.IsNullOrEmpty(contentPivot.ParentLink) ?
+                null :
+                contentLoader.Get<IContent>(contentPivot.ParentLink);
+
+                //if the parent is null - end of navigation
+                if (parent == null)
+                    return default;
+
+                //we are still inside the tree, we continue to loop
+                contentPivot = parent;
+            }
+
+            //unlikely to happen but there to avoid stackoverflow exception. we return null
+            return default;
+        }
+
         /// <summary>
         /// Get the first ancestor based on the predicate - use cache functions
         /// </summary>
@@ -25,33 +62,10 @@ namespace Dotcentric.EPiServer.Extensions
             Func<IContent, bool> predicate,
             int maxLevel = defaultMaxLevel)
         {
-            if (content == null)
-                return null;
-
-            var contentPivot = content;
-
-            for (var i = 0; i < maxLevel; i++)
-            {
-                if (predicate.Invoke(contentPivot))
-                    return contentPivot;
-
-                var parent = ContentReference.IsNullOrEmpty(contentPivot.ParentLink) ?
-                null :
-                contentLoader.Get<IContent>(contentPivot.ParentLink);
-
-                //if the parent is null - end of navigation
-                if (parent == null)
-                    return null;
-
-                //we are still inside the tree, we continue to loop
-                contentPivot = parent;
-            }
-
-            //unlikely to happen but there to avoid stackoverflow exception. we return null
-            return null;
+            return GetAncestorOrSelf<IContent>(contentLoader, content, predicate, maxLevel);
         }
 
-        /// Same function than GetAncestorOrSelf but with the parent as part of the predicate
+        /// Same function than GetAncestorOrSelf but with the parent as part of a predicate
         /// so we dont need to call .Get<> to get the parent object twice
         /// </summary>
         /// <param name="contentLoader"></param>
@@ -59,13 +73,21 @@ namespace Dotcentric.EPiServer.Extensions
         /// <param name="predicate"></param>
         /// <param name="maxLevel"></param>
         /// <returns></returns>
-        public static IContent GetAncestorOrSelf(this IContentLoader contentLoader,
-           IContent content,
-           Func<IContent, IContent, bool> predicate,
-           int maxLevel = defaultMaxLevel)
+        public static T GetAncestorOrSelf<T>(this IContentLoader contentLoader,
+            IContent content, 
+            Func<T, bool> predicate,
+            Func<IContent, bool> parentPredicate,
+            int maxLevel = defaultMaxLevel) where T : IContent
         {
             if (content == null)
-                return null;
+                throw new ArgumentNullException(nameof(content));
+
+            //if you want to use the function without predicate see GetAncestorOrSelf with the nullable predicate
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+
+            if (parentPredicate == null)
+                throw new ArgumentNullException(nameof(parentPredicate));
 
             //pivot will be the variable that will be used to navigate up the content tree
             var contentPivot = content;
@@ -78,73 +100,45 @@ namespace Dotcentric.EPiServer.Extensions
                 contentLoader.Get<IContent>(contentPivot.ParentLink);
 
                 //we can allow the predicate to work even with a null parent
-                if (predicate.Invoke(contentPivot, parent))
-                    return contentPivot;
+                if (contentPivot is T typedContentPivot && 
+                    predicate.Invoke(typedContentPivot) && 
+                    parentPredicate.Invoke(parent))
+                    return typedContentPivot;
 
                 //if the parent is null - end of navigation
                 if (parent == null)
-                    return null;
+                    return default(T);
 
                 //we are still inside the tree, we continue to loop
                 contentPivot = parent;
             }
 
             //unlikely to happen but there to avoid stackoverflow exception. we return null
-            return null;
+            return default(T);
         }
 
-        public static T GetAncestorOrSelf<T>(this IContentLoader contentLoader,
+        public static IContent GetAncestorOrSelf(this IContentLoader contentLoader,
             IContent content,
-            int maxLevel = defaultMaxLevel) where T : IContent
+            Func<IContent, bool> predicate,
+            Func<IContent, bool> parentPredicate,
+            int maxLevel = defaultMaxLevel) 
         {
-            var res = contentLoader.GetAncestorOrSelf(content,
-                (pivot) => pivot is T, maxLevel);
-
-            if (res == null)
-                return default(T);
-
-            return (T)res;
+            return GetAncestorOrSelf<IContent>(contentLoader, content, predicate, parentPredicate, maxLevel);
         }
 
-        public static T GetAncestorOrSelf<T>(this IContentLoader contentLoader,
+        public static T GetAncestor<T>(this IContentLoader contentLoader,
             IContent content,
-            Func<T, bool> predicate, 
+            Func<T, bool> predicate,
             int maxLevel = defaultMaxLevel) where T : IContent
         {
             if (content == null)
-                return default;
+                throw new ArgumentNullException(nameof(content));
 
-            //the new predicate is the predicate about the type + the predicate in param
-            Func<T, bool> fullPredicate = (pivot) => pivot is T typedObj && predicate.Invoke(typedObj);
+            var parent = ContentReference.IsNullOrEmpty(content.ParentLink) ?
+                null :
+                contentLoader.Get<IContent>(content.ParentLink);
 
-            return GetAncestorOrSelf(contentLoader, content, predicate, maxLevel);
-        }
-       
-        public static T GetAncestor<T>(this IContentLoader contentLoader,
-            IContent content,
-            int maxLevel = defaultMaxLevel) where T : IContent
-        {
-            var res = contentLoader.GetAncestor(content,
-                (pivot) => pivot is T, maxLevel);
-
-            if (res == null)
-                return default(T);
-
-            return (T) res;
-        }
-
-        public static T GetAncestor<T>(this IContentLoader contentLoader,
-          IContent content,
-          Func<T, bool> predicate,
-          int maxLevel = defaultMaxLevel) where T : IContent
-        {
-            var res = contentLoader.GetAncestor(content,
-                (pivot) => pivot is T typedObj && predicate.Invoke(typedObj), maxLevel);
-
-            if (res == null)
-                return default(T);
-
-            return (T) res;
+            return GetAncestorOrSelf<T>(contentLoader, content, predicate, maxLevel);
         }
 
         ///for this function we move to the first parent then call GetAncestorOrSelf
@@ -153,18 +147,7 @@ namespace Dotcentric.EPiServer.Extensions
             Func<IContent, bool> predicate,
             int maxLevel = defaultMaxLevel)
         {
-            if (content == null)
-                return null;
-
-            var parent = ContentReference.IsNullOrEmpty(content.ParentLink) ?
-                null :
-                contentLoader.Get<IContent>(content.ParentLink);
-
-            //pivot will be the variable that will be used to navigate up the content tree 
-            //we start with the parent
-            var contentPivot = parent;
-
-            return GetAncestorOrSelf(contentLoader, contentPivot, predicate, maxLevel);
+            return GetAncestor<IContent>(contentLoader, content, predicate, maxLevel);
         }
     
         public static IEnumerable<T> GetAncestors<T>(this IContentLoader contentLoader,
@@ -283,6 +266,47 @@ namespace Dotcentric.EPiServer.Extensions
             return GetDescendantOrSelf<IContent>(contentLoader, content, predicate, maxLevel);
         }
 
+        public static T GetDescendant<T>(this IContentLoader contentLoader,
+            IContent content,
+            Func<T, bool> predicate,
+            int maxLevel = defaultMaxLevel) where T : IContent
+        {
+            IEnumerable<IContent> pivot = new List<IContent>
+            {
+                content
+            };
+
+            for (var i = 0; i < maxLevel; i++)
+            {
+                var children = pivot.SelectMany(x => contentLoader.GetChildren<IContent>(x.ContentLink));
+
+                if (!children.Any())
+                    break;
+
+                var res = children
+                    .OfType<T>()
+                    .FirstOrDefault(predicate);
+
+                //we can return the object is the value is not default nor null
+                if (res != null)
+                    return res;
+
+                //we move to the next level
+                pivot = children;
+            }
+
+            //we couldnt find a predicate so we just return the default value for the return
+            return default;
+        }
+
+        public static IContent GetDescendant(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, bool> predicate,
+            int maxLevel = defaultMaxLevel)
+        {
+            return GetDescendant<IContent>(contentLoader, content, predicate, maxLevel);
+        }
+
         public static IEnumerable<T> GetDescendants<T>(this IContentLoader contentLoader, 
             IContent content,
             Func<T, bool> predicate = null,
@@ -318,6 +342,50 @@ namespace Dotcentric.EPiServer.Extensions
             int maxLevel = defaultMaxLevel)
         {
             return GetDescendants<IContent>(contentLoader, content, predicate, maxLevel);
+        }
+
+        public static IEnumerable<T> Siblings<T>(this IContentLoader contentLoader,
+            IContent content,
+            Func<T, bool> predicate = null) where T : IContent
+        {
+            if (content == null)
+                throw new ArgumentNullException(nameof(content));
+
+            //no parent - mostly due to be at the top of the content tree - we return an empty list
+            if (ContentReference.IsNullOrEmpty(content.ParentLink))
+                return Enumerable.Empty<T>();
+
+            var parent = contentLoader.Get<IContent>(content.ParentLink);
+
+            if (parent == null)
+                return Enumerable.Empty<T>();
+
+            var siblings = contentLoader.GetChildren<T>(parent.ContentLink);
+
+            var toReturn = predicate == null ? siblings : siblings.Where(predicate);
+
+            return toReturn;
+        }
+
+        public static IEnumerable<IContent> Siblings(this IContentLoader contentLoader, 
+            IContent content, 
+            Func<IContent, bool> predicate = null)
+        {
+            return Siblings(contentLoader, content, predicate);
+        }
+
+        public static T FirstSibling<T>(this IContentLoader contentLoader,
+           IContent content,
+           Func<T, bool> predicate) where T : IContent
+        {
+            return Siblings<T>(contentLoader, content, predicate).FirstOrDefault();
+        }
+
+        public static IContent FirstSibling(this IContentLoader contentLoader, 
+            IContent content, 
+            Func<IContent, bool> predicate)
+        {
+            return FirstSibling<IContent>(contentLoader, content, predicate);
         }
     }
 }
