@@ -387,5 +387,14 @@ namespace Dotcentric.EPiServer.Extensions
         {
             return FirstSibling<IContent>(contentLoader, content, predicate);
         }
+
+        public static T FirstChild<T>(this IContentLoader contentLoader,
+            ContentReference contentReference,
+            Func<T, bool> predicate = null) where T : IContentData
+        {
+            var children = contentLoader.GetChildren<T>(contentReference);
+
+            return predicate == null ? children.FirstOrDefault() : children.FirstOrDefault(predicate);
+        }
     }
 }
