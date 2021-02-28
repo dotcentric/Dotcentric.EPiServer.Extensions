@@ -1,6 +1,8 @@
 ﻿using EPiServer;
 using EPiServer.Core;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Dotcentric.EPiServer.Extensions
 {
@@ -120,7 +122,6 @@ namespace Dotcentric.EPiServer.Extensions
             return GetAncestorOrSelf(contentLoader, content, predicate, maxLevel);
         }
        
-
         public static T GetAncestor<T>(this IContentLoader contentLoader,
             IContent content,
             int maxLevel = defaultMaxLevel) where T : IContent
@@ -166,6 +167,57 @@ namespace Dotcentric.EPiServer.Extensions
             var contentPivot = parent;
 
             return GetAncestorOrSelf(contentLoader, contentPivot, predicate, maxLevel);
+        }
+    
+        public static IEnumerable<T> GetAncestors<T>(this IContentLoader contentLoader,
+            IContent content,
+            Func<T, bool> predicate = null,
+            int maxLevel = defaultMaxLevel) where T : IContent
+        {
+            //default ? we return an empty list
+            if (content.Equals(default(T)))
+                return Enumerable.Empty<T>();
+
+            //pivot will be the variable that will be used to navigate up the content tree
+            var contentPivot = content;
+
+            var toReturn = new List<T>();
+
+            //please do not use 'while' loops
+            for (var i = 0; i < maxLevel; i++)
+            {
+                //we only get ancestors of a specific type - if the type is not right then we can skip
+                if(contentPivot is T)
+                {
+                    if (predicate == null)
+                        toReturn.Add((T)contentPivot);
+
+                    else if (predicate.Invoke((T)contentPivot))
+                        toReturn.Add((T)contentPivot);
+                }
+
+                IContent parent = ContentReference.IsNullOrEmpty(contentPivot.ParentLink) ?
+                null :
+                contentLoader.Get<IContent>(contentPivot.ParentLink);
+
+                //if the parent is null - end of navigation
+                if (parent==null)
+                    break;
+
+                //we are still inside the tree, we continue to loop
+                contentPivot = parent;
+            }
+
+            //we return our list of ancestors based on the predicate
+            return toReturn;
+        }
+    
+        public static IEnumerable<IContent> GetAncestors(this IContentLoader contentLoader,
+            IContent content, 
+            Func<IContent,bool> predicate = null, 
+            int maxLevel = defaultMaxLevel)
+        {
+            return GetAncestors<IContent>(contentLoader, content, predicate, maxLevel);
         }
     }
 }
