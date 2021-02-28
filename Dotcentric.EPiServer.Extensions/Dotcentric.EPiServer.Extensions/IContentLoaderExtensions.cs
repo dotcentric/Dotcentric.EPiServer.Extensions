@@ -3,6 +3,7 @@ using EPiServer.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace Dotcentric.EPiServer.Extensions
 {
@@ -344,7 +345,7 @@ namespace Dotcentric.EPiServer.Extensions
             return GetDescendants<IContent>(contentLoader, content, predicate, maxLevel);
         }
 
-        public static IEnumerable<T> Siblings<T>(this IContentLoader contentLoader,
+        public static IEnumerable<T> SiblingsAndSelf<T>(this IContentLoader contentLoader,
             IContent content,
             Func<T, bool> predicate = null) where T : IContent
         {
@@ -355,23 +356,42 @@ namespace Dotcentric.EPiServer.Extensions
             if (ContentReference.IsNullOrEmpty(content.ParentLink))
                 return Enumerable.Empty<T>();
 
-            var parent = contentLoader.Get<IContent>(content.ParentLink);
+            var success = contentLoader.TryGet(content.ParentLink, out IContent parent);
 
-            if (parent == null)
+            if (!success)
                 return Enumerable.Empty<T>();
 
-            var siblings = contentLoader.GetChildren<T>(parent.ContentLink);
+            var siblings = contentLoader
+                .GetChildren<T>(parent.ContentLink);
 
             var toReturn = predicate == null ? siblings : siblings.Where(predicate);
 
             return toReturn;
         }
 
+        public static IEnumerable<IContent> SiblingsAndSelf(this IContentLoader contentLoader,
+            IContent content, 
+            Func<IContent, bool> predicate = null)
+        {
+            return SiblingsAndSelf<IContent>(contentLoader, content, predicate);
+        }
+
+        public static IEnumerable<T> Siblings<T>(this IContentLoader contentLoader,
+            IContent content,
+            Func<T, bool> predicate = null) where T : IContent
+        {
+            var siblings = SiblingsAndSelf(contentLoader, content, predicate)
+                .Where(x => x.ContentLink.ID != content.ContentLink.ID);
+
+            //predicate was applied at the SiblingsAndSelf level
+            return siblings;
+        }
+
         public static IEnumerable<IContent> Siblings(this IContentLoader contentLoader, 
             IContent content, 
             Func<IContent, bool> predicate = null)
         {
-            return Siblings(contentLoader, content, predicate);
+            return Siblings<IContent>(contentLoader, content, predicate);
         }
 
         public static T FirstSibling<T>(this IContentLoader contentLoader,
@@ -395,6 +415,102 @@ namespace Dotcentric.EPiServer.Extensions
             var children = contentLoader.GetChildren<T>(contentReference);
 
             return predicate == null ? children.FirstOrDefault() : children.FirstOrDefault(predicate);
+        }
+
+        public static IEnumerable<IContent> OrderedSiblingsAndSelf<TKey>(this IContentLoader contentLoader,
+           IContent content,
+           Func<IContent, TKey> keySelector)
+        {
+            var siblings = SiblingsAndSelf<IContent>(contentLoader, content, null);
+
+            //we order the list of children
+            return siblings.OrderBy(keySelector).ToList();
+        }
+
+        /// <summary>
+        /// Provides the next siblings of type T 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="contentLoader"></param>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> FollowingSiblings<T, TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+            where T : IContent
+        {
+            var orderedChildren = OrderedSiblingsAndSelf(contentLoader, content, keySelector).ToList();
+
+            var position = orderedChildren.IndexOf(content);
+
+            var rightList = orderedChildren.Skip(position + 1).Take(orderedChildren.Count - position - 1);
+
+            return rightList.OfType<T>();
+        }
+
+        public static IEnumerable<IContent> FollowingSiblings<TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+        {
+            return FollowingSiblings<IContent, TKey>(contentLoader, content, keySelector);
+        }
+
+        public static T FollowingSibling<T, TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+            where T : IContent
+        {
+            return FollowingSiblings<T, TKey>(contentLoader, content, keySelector).FirstOrDefault();
+        }
+
+        public static IContent FollowingSibling<TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+        {
+            return FollowingSibling<IContent, TKey>(contentLoader, content, keySelector);
+        }
+
+        /// <summary>
+        /// Provides the previous siblings of type T 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="contentLoader"></param>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> PreviousSiblings<T, TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+            where T : IContent
+        {
+            var orderedChildren = OrderedSiblingsAndSelf(contentLoader, content, keySelector).ToList();
+
+            var position = orderedChildren.IndexOf(content);
+
+            var rightList = orderedChildren.Take(position);
+
+            return rightList.OfType<T>();
+        }
+
+        public static IEnumerable<IContent> PreviousSiblings<TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+        {
+            return PreviousSiblings<IContent, TKey>(contentLoader, content, keySelector);
+        }
+
+        public static T PreviousSibling<T, TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+            where T : IContent
+        {
+            return PreviousSiblings<T, TKey>(contentLoader, content, keySelector).LastOrDefault();
+        }
+
+        public static IContent PreviousSibling<TKey>(this IContentLoader contentLoader,
+            IContent content,
+            Func<IContent, TKey> keySelector)
+        {
+            return PreviousSibling<IContent, TKey>(contentLoader, content, keySelector);
         }
     }
 }
