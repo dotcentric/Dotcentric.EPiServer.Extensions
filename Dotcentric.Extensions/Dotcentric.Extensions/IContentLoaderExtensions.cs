@@ -382,7 +382,8 @@ namespace Dotcentric.Extensions
             Func<T, bool> predicate = null) where T : IContent
         {
             var siblings = SiblingsAndSelf(contentLoader, content, predicate)
-                .Where(x => x.ContentLink.ID != content.ContentLink.ID);
+                .Where(x => x.ContentLink.ID != content.ContentLink.ID)
+                .ToList();
 
             //predicate was applied at the SiblingsAndSelf level
             return siblings;
