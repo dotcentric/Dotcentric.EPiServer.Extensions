@@ -1,0 +1,4 @@
+@using Dotcentric.Extensions.Website
+@model PageViewModel<Dotcentric.Extensions.Website.Models.Pages.StartPage>
+
+@Html.PropertyFor(x => x.CurrentPage.MainContentArea, new { CssClass = "row equal-height", tag = Global.ContentAreaTags.FullWidth })
