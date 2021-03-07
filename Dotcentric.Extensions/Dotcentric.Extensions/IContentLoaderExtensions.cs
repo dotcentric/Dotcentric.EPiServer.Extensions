@@ -128,7 +128,7 @@ namespace Dotcentric.Extensions
 
         public static T GetAncestor<T>(this IContentLoader contentLoader,
             IContent content,
-            Func<T, bool> predicate,
+            Func<T, bool> predicate = null,
             int maxLevel = defaultMaxLevel) where T : IContent
         {
             if (content == null)
@@ -144,7 +144,7 @@ namespace Dotcentric.Extensions
         ///for this function we move to the first parent then call GetAncestorOrSelf
         public static IContent GetAncestor(this IContentLoader contentLoader,
             IContent content,
-            Func<IContent, bool> predicate,
+            Func<IContent, bool> predicate = null,
             int maxLevel = defaultMaxLevel)
         {
             return GetAncestor<IContent>(contentLoader, content, predicate, maxLevel);
@@ -202,7 +202,7 @@ namespace Dotcentric.Extensions
         }
 
         /// <summary>
-        /// Non recursive function to retrieve the first descendant or self based on the predicate
+        /// Non recursive function to retrieve the first Descendent or self based on the predicate
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="contentLoader"></param>
@@ -210,7 +210,7 @@ namespace Dotcentric.Extensions
         /// <param name="predicate"></param>
         /// <param name="maxLevel"></param>
         /// <returns></returns>
-        public static T GetDescendantOrSelf<T>(this IContentLoader contentLoader,
+        public static T GetDescendentOrSelf<T>(this IContentLoader contentLoader,
             IContent content,
             Func<T, bool> predicate,
             int maxLevel = defaultMaxLevel) where T : IContent
@@ -250,7 +250,7 @@ namespace Dotcentric.Extensions
         }
 
         /// <summary>
-        /// Non recursive non generic function to retrieve the first descendant or self 
+        /// Non recursive non generic function to retrieve the first Descendent or self 
         /// based on the predicate
         /// </summary>
         /// <param name="contentLoader"></param>
@@ -258,17 +258,17 @@ namespace Dotcentric.Extensions
         /// <param name="predicate"></param>
         /// <param name="maxLevel"></param>
         /// <returns></returns>
-        public static IContent GetDescendantOrSelf(this IContentLoader contentLoader,
+        public static IContent GetDescendentOrSelf(this IContentLoader contentLoader,
             IContent content,
             Func<IContent, bool> predicate,
             int maxLevel = defaultMaxLevel)
         {
-            return GetDescendantOrSelf<IContent>(contentLoader, content, predicate, maxLevel);
+            return GetDescendentOrSelf<IContent>(contentLoader, content, predicate, maxLevel);
         }
 
-        public static T GetDescendant<T>(this IContentLoader contentLoader,
+        public static T GetDescendent<T>(this IContentLoader contentLoader,
             IContent content,
-            Func<T, bool> predicate,
+            Func<T, bool> predicate = null,
             int maxLevel = defaultMaxLevel) where T : IContent
         {
             IEnumerable<IContent> pivot = new List<IContent>
@@ -283,9 +283,11 @@ namespace Dotcentric.Extensions
                 if (!children.Any())
                     break;
 
-                var res = children
-                    .OfType<T>()
-                    .FirstOrDefault(predicate);
+                var typedChildren = children
+                    .OfType<T>();
+
+                var res = predicate == null ? typedChildren.FirstOrDefault() : 
+                    typedChildren.FirstOrDefault(predicate);
 
                 //we can return the object is the value is not default nor null
                 if (res != null)
@@ -299,15 +301,15 @@ namespace Dotcentric.Extensions
             return default;
         }
 
-        public static IContent GetDescendant(this IContentLoader contentLoader,
+        public static IContent GetDescendent(this IContentLoader contentLoader,
             IContent content,
-            Func<IContent, bool> predicate,
+            Func<IContent, bool> predicate = null,
             int maxLevel = defaultMaxLevel)
         {
-            return GetDescendant<IContent>(contentLoader, content, predicate, maxLevel);
+            return GetDescendent<IContent>(contentLoader, content, predicate, maxLevel);
         }
 
-        public static IEnumerable<T> GetDescendants<T>(this IContentLoader contentLoader,
+        public static IEnumerable<T> GetDescendents<T>(this IContentLoader contentLoader,
             IContent content,
             Func<T, bool> predicate = null,
             int maxLevel = defaultMaxLevel)
@@ -336,12 +338,12 @@ namespace Dotcentric.Extensions
             return toReturn;
         }
 
-        public static IEnumerable<IContent> GetDescendants(this IContentLoader contentLoader,
+        public static IEnumerable<IContent> GetDescendents(this IContentLoader contentLoader,
             IContent content,
             Func<IContent, bool> predicate = null,
             int maxLevel = defaultMaxLevel)
         {
-            return GetDescendants<IContent>(contentLoader, content, predicate, maxLevel);
+            return GetDescendents<IContent>(contentLoader, content, predicate, maxLevel);
         }
 
         public static IEnumerable<T> SiblingsAndSelf<T>(this IContentLoader contentLoader,
