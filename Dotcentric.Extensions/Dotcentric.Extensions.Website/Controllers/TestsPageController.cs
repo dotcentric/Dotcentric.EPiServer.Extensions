@@ -20,7 +20,7 @@ namespace Dotcentric.Extensions.Website.Controllers
 
         public ActionResult Index(TestsPage currentPage)
         {
-            //retrieving the start page from the current page (must not be a sibling of Start page)
+            //retrieving the start page from the current page (current page must not be a sibling of Start page)
             var ancestorOrSelfStartPage = _contentLoader.GetAncestorOrSelf<StartPage>(currentPage);
 
             //test the 'or self' part of the function - must return the currentPage
@@ -44,7 +44,6 @@ namespace Dotcentric.Extensions.Website.Controllers
 
             var testValues = new TestsViewModel
             {
-                CurrentPage = currentPage,
                 TestAncestorStartPage = ancestorOrSelfStartPage,
                 TestAncestorOrSelf = selfPage,
                 TestAncestor = ancestorSitePage,

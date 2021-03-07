@@ -1,8 +1,19 @@
-﻿@using Dotcentric.Extensions.Website
-@model PageViewModel<StandardPage>
+﻿@model PageViewModel<StandardPage>
 
-@{ Layout = "~/Views/Shared/Layouts/_LeftNavigation.cshtml"; }
+@{ 
+    Layout = "~/Views/Shared/Layouts/_LeftNavigation.cshtml";
+    var testValues = ViewBag.TestsViewModel as TestsViewModel; 
+}
 
 <h1>@Model.CurrentPage.PageName</h1>
 
-<
+<div>
+    <p>Retrieving the start page from the <a href="@GetUrl(Model.CurrentPage)">current page</a> : <a href="@GetUrl(testValues.TestAncestorStartPage)">start page</a> </p>
+    <p>Retrieving the current page when calling GetAncestorOrSelf : <a href="@GetUrl(testValues.TestAncestorOrSelf)">result</a></p>
+    <p>Testing the 'GetAncestor' function with StartPage as predicate type: <a href="@GetUrl(testValues.TestAncestor)">result</a></p>
+</div>
+
+@helper GetUrl(EPiServer.Core.IContent content) 
+{
+    @Url.ContentUrl(content.ContentLink)
+}

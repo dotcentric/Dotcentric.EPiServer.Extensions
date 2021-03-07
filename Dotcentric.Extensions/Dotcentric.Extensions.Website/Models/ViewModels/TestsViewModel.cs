@@ -5,7 +5,6 @@ namespace Dotcentric.Extensions.Website.Models.ViewModels
 {
     public class TestsViewModel
     {
-        public IContent CurrentPage { get; set; }
         public IContent TestAncestorStartPage { get; set; }
         public IContent TestAncestorOrSelf { get; set; }
         public IContent TestAncestor { get; set; }
