@@ -2,6 +2,7 @@
 using EPiServer.Core;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Dotcentric.Extensions
@@ -14,6 +15,7 @@ namespace Dotcentric.Extensions
         public static T GetAncestorOrSelf<T>(this IContentLoader contentLoader,
             IContent content,
             Func<T, bool> predicate = null,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel) where T : IContent
         {
             if (content == null)
@@ -34,7 +36,9 @@ namespace Dotcentric.Extensions
 
                 var parent = ContentReference.IsNullOrEmpty(contentPivot.ParentLink) ?
                 null :
-                contentLoader.Get<IContent>(contentPivot.ParentLink);
+                cultureInfo == null ?
+                contentLoader.Get<IContent>(contentPivot.ParentLink) :
+                contentLoader.Get<IContent>(contentPivot.ParentLink, cultureInfo);
 
                 //if the parent is null - end of navigation
                 if (parent == null)
@@ -60,9 +64,10 @@ namespace Dotcentric.Extensions
         public static IContent GetAncestorOrSelf(this IContentLoader contentLoader,
             IContent content,
             Func<IContent, bool> predicate,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel)
         {
-            return GetAncestorOrSelf<IContent>(contentLoader, content, predicate, maxLevel);
+            return GetAncestorOrSelf<IContent>(contentLoader, content, predicate, cultureInfo, maxLevel);
         }
 
         /// Same function than GetAncestorOrSelf but with the parent as part of a predicate
@@ -77,6 +82,7 @@ namespace Dotcentric.Extensions
             IContent content,
             Func<T, bool> predicate,
             Func<IContent, bool> parentPredicate,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel) where T : IContent
         {
             if (content == null)
@@ -97,7 +103,9 @@ namespace Dotcentric.Extensions
             {
                 var parent = ContentReference.IsNullOrEmpty(contentPivot.ParentLink) ?
                 null :
-                contentLoader.Get<IContent>(contentPivot.ParentLink);
+                cultureInfo == null ?
+                contentLoader.Get<IContent>(contentPivot.ParentLink) :
+                contentLoader.Get<IContent>(contentPivot.ParentLink, cultureInfo);
 
                 //we can allow the predicate to work even with a null parent
                 if (contentPivot is T typedContentPivot &&
@@ -107,7 +115,7 @@ namespace Dotcentric.Extensions
 
                 //if the parent is null - end of navigation
                 if (parent == null)
-                    return default(T);
+                    return default;
 
                 //we are still inside the tree, we continue to loop
                 contentPivot = parent;
@@ -121,14 +129,16 @@ namespace Dotcentric.Extensions
             IContent content,
             Func<IContent, bool> predicate,
             Func<IContent, bool> parentPredicate,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel)
         {
-            return GetAncestorOrSelf<IContent>(contentLoader, content, predicate, parentPredicate, maxLevel);
+            return GetAncestorOrSelf<IContent>(contentLoader, content, predicate, parentPredicate, cultureInfo, maxLevel);
         }
 
         public static T GetAncestor<T>(this IContentLoader contentLoader,
             IContent content,
             Func<T, bool> predicate = null,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel) where T : IContent
         {
             if (content == null)
@@ -138,21 +148,23 @@ namespace Dotcentric.Extensions
                 null :
                 contentLoader.Get<IContent>(content.ParentLink);
 
-            return GetAncestorOrSelf<T>(contentLoader, content, predicate, maxLevel);
+            return GetAncestorOrSelf<T>(contentLoader, content, predicate, cultureInfo, maxLevel);
         }
 
         ///for this function we move to the first parent then call GetAncestorOrSelf
         public static IContent GetAncestor(this IContentLoader contentLoader,
             IContent content,
             Func<IContent, bool> predicate = null,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel)
         {
-            return GetAncestor<IContent>(contentLoader, content, predicate, maxLevel);
+            return GetAncestor<IContent>(contentLoader, content, predicate, cultureInfo, maxLevel);
         }
 
         public static IEnumerable<T> GetAncestors<T>(this IContentLoader contentLoader,
             IContent content,
             Func<T, bool> predicate = null,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel) where T : IContent
         {
             //default ? we return an empty list
@@ -168,18 +180,20 @@ namespace Dotcentric.Extensions
             for (var i = 0; i < maxLevel; i++)
             {
                 //we only get ancestors of a specific type - if the type is not right then we can skip
-                if (contentPivot is T)
+                if (contentPivot is T typedPivot)
                 {
                     if (predicate == null)
-                        toReturn.Add((T)contentPivot);
+                        toReturn.Add(typedPivot);
 
-                    else if (predicate.Invoke((T)contentPivot))
-                        toReturn.Add((T)contentPivot);
+                    else if (predicate.Invoke(typedPivot))
+                        toReturn.Add(typedPivot);
                 }
 
                 IContent parent = ContentReference.IsNullOrEmpty(contentPivot.ParentLink) ?
                 null :
-                contentLoader.Get<IContent>(contentPivot.ParentLink);
+                cultureInfo == null ?
+                contentLoader.Get<IContent>(contentPivot.ParentLink) :
+                contentLoader.Get<IContent>(contentPivot.ParentLink, cultureInfo);
 
                 //if the parent is null - end of navigation
                 if (parent == null)
@@ -196,9 +210,10 @@ namespace Dotcentric.Extensions
         public static IEnumerable<IContent> GetAncestors(this IContentLoader contentLoader,
             IContent content,
             Func<IContent, bool> predicate = null,
+            CultureInfo cultureInfo = null,
             int maxLevel = defaultMaxLevel)
         {
-            return GetAncestors<IContent>(contentLoader, content, predicate, maxLevel);
+            return GetAncestors<IContent>(contentLoader, content, predicate, cultureInfo, maxLevel);
         }
 
         /// <summary>
@@ -286,7 +301,7 @@ namespace Dotcentric.Extensions
                 var typedChildren = children
                     .OfType<T>();
 
-                var res = predicate == null ? typedChildren.FirstOrDefault() : 
+                var res = predicate == null ? typedChildren.FirstOrDefault() :
                     typedChildren.FirstOrDefault(predicate);
 
                 //we can return the object is the value is not default nor null
@@ -538,4 +553,6 @@ namespace Dotcentric.Extensions
             return PreviousSibling<IContent, TKey>(contentLoader, content, keySelector);
         }
     }
+
+
 }
