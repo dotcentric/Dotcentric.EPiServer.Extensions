@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>0.9.0.0</version>
+    <title>Dotcentric.EPiServer.Extensions</title>
+    <authors>Giuliano Dore</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/dotcentric/Dotcentric.EPiServer.Extensions</projectUrl>
+    <icon>icon.png</icon>
+    <description>A set of helper functions used to extend EPiServer native functions</description>
+    <releaseNotes>First release of the package. IContentLoader extension helpers.</releaseNotes>
+	<repository type="git" url="https://github.com/dotcentric/Dotcentric.EPiServer.Extensions.git" branch="main" commit="09dfcbcb3a8f1d11889369e2593d301466e0c983"></repository>
+    <copyright>$copyright$</copyright>
+    <tags>EPiServer IContentLoader Extensions</tags>
+	<dependencies>
+		<group targetFramework=".NETFramework4.6.1"></group>
+		<group>
+			<dependency id="EPiServer.CMS.Core" version="11.15.1"></dependency>
+		</group>
+	</dependencies>
+  </metadata>
+  <files>
+	<file src="icon.png" target="\"></file>
+  </files>
+</package>
